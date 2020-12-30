@@ -95,7 +95,8 @@ server.post('/api/v1/register', async (req, res) => {
 
   const user = await new User({
     email: req.body.email,
-    password: req.body.password
+    password: req.body.password,
+    role: ['user', 'admin']
   })
   await user.save()
 
@@ -118,18 +119,26 @@ server.get('/api/v1/test/auth', async (req, res) => {
   }
 })
 
-server.get('/api/v1/admin/logout', auth(['admin']), async (req, res) => {
+server.post('/api/v1/admin/user/logout', auth(['admin']), (req, res) => {
+  let newOnlineUsers = []
+
   connections.forEach((c) => {
-    c.write(JSON.stringify({ type: 'LOGOUT' }))
+    c.userInfo._id === req.body.id
+      ? c.write(JSON.stringify({ type: 'LOGOUT' }))
+      : newOnlineUsers.push(c.userInfo)
   })
-  res.json({ status: 200 })
+
+  res.json({ status: 200, newOnlineUsers })
 })
 
 server.get('/api/v1/admin/users', auth(['admin']), async (req, res) => {
+  let users = []
+
   connections.forEach((c) => {
-    c.write(JSON.stringify({ type: 'PUSH_USER_INFO' }))
+    users.push(c.userInfo)
   })
-  res.json({ status: 200 })
+
+  res.json({ status: 200, users })
 })
 
 server.use('/api/', (req, res) => {
@@ -176,12 +185,35 @@ if (config.isSocketsEnabled) {
       const data = JSON.parse(message)
 
       if (data.type === 'WELCOME') {
+        const userInfo = data.user
+        delete userInfo.password
+
         conn.token = data.token
+        conn.userInfo = userInfo
+
+        let newOnlineUsers = []
+
+        connections.forEach((c) => {
+          newOnlineUsers.push(c.userInfo)
+        })
+
+        connections.forEach((c) => {
+          c.write(JSON.stringify({ type: 'UPDATE_ONLINE_USERS', users: newOnlineUsers }))
+        })
       }
     })
 
     conn.on('close', () => {
       connections = connections.filter((c) => c.readyState !== 3)
+      let newOnlineUsers = []
+
+      connections.forEach((c) => {
+        newOnlineUsers.push(c.userInfo)
+      })
+
+      connections.forEach((c) => {
+        c.write(JSON.stringify({ type: 'UPDATE_ONLINE_USERS', users: newOnlineUsers }))
+      })
     })
   })
   echo.installHandlers(app, { prefix: '/ws' })

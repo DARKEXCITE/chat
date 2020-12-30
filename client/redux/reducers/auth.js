@@ -17,6 +17,7 @@ const initialState = {
 const sideEffects = {
   [LOGOUT]: () => {
     cookies.remove('token')
+    document.location.href = '/login'
   }
 }
 
@@ -79,7 +80,8 @@ export function signIn() {
         getSocket().send(
           JSON.stringify({
             type: 'WELCOME',
-            token: data.user.id
+            token: data.token,
+            userInfo: data.user
           })
         )
         dispatch({
@@ -97,12 +99,16 @@ export function trySignIn() {
     fetch('/api/v1/test/auth')
       .then((r) => r.json())
       .then((data) => {
-        getSocket().send(
-          JSON.stringify({
-            type: 'WELCOME',
-            token: data.user.id
-          })
-        )
+        setTimeout(() => {
+          getSocket().send(
+            JSON.stringify({
+              type: 'WELCOME',
+              token: data.token,
+              user: data.user
+            })
+          )
+        }, 1000)
+
         dispatch({
           type: LOGIN,
           token: data.token,
