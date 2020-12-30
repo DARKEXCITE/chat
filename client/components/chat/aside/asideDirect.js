@@ -1,4 +1,4 @@
-import React from "react"
+import React from 'react'
 
 const AsideDirect = () => {
   return (
@@ -7,7 +7,9 @@ const AsideDirect = () => {
 
       <div className="flex items-center mb-3 px-4">
         <span className="bg-green-600 rounded-full block w-2 h-2 mr-2" />
-        <span>Olivia Dunham <i className="text-gray-500 text-sm">(me)</i></span>
+        <span>
+          Olivia Dunham <i className="text-gray-500 text-sm">(me)</i>
+        </span>
       </div>
 
       <div className="flex items-center mb-3 px-4">

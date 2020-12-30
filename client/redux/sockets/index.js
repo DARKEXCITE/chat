@@ -1,8 +1,10 @@
 export default {
-  connected: (data) => ({
-    type: 'SOCKET_CONNECTED',
-    data
-  }),
+  connected: (data) => {
+    return {
+      type: 'SOCKET_CONNECTED',
+      data
+    }
+  },
   message: (data) => {
     return JSON.parse(data)
   },

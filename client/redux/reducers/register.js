@@ -1,4 +1,4 @@
-import { history } from "../index"
+import { history } from '../index'
 
 const UPDATE_REGISTER_LOGIN = 'UPDATE_REGISTER_LOGIN'
 const UPDATE_REGISTER_PASSWORD = 'UPDATE_REGISTER_PASSWORD'
@@ -60,26 +60,20 @@ export function signUp() {
     await fetch('/api/v1/register', {
       method: 'POST',
       body: JSON.stringify({
-        email, password
+        email,
+        password
       }),
       headers: {
         'Content-Type': 'application/json'
       }
     })
       .then((r) => r.json())
-      .then((res) => new Promise((resolve, reject) => {
-          if (res.status === 203) {
-            reject(res.message)
-          }
-          resolve(res)
+      .then(() => {
+        dispatch({ type: REGISTER })
+        history.push('/login')
       })
-        .then(() => {
-          dispatch({ type: REGISTER })
-          history.push('/login')
-        })
-        .catch((err) => {
-          dispatch({ type: UPDATE_MESSAGE, message: err })
-        }))
-
+      .catch((err) => {
+        dispatch({ type: UPDATE_MESSAGE, message: err })
+      })
   }
 }

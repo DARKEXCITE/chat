@@ -17,10 +17,7 @@ export default (state = initialState, action) => {
     case UPDATE_MESSAGES:
       return {
         ...state,
-        messages: [
-          ...state.messages,
-          { message: action.message, email: action.email }
-        ]
+        messages: [...state.messages, { message: action.message, email: action.email }]
       }
 
     default:

@@ -1,8 +1,8 @@
-import React from "react"
+import React from 'react'
 
-import DialogHeader from "./dialog/dialogHeader"
-import DialogBody from "./dialog/dialogBody"
-import DialogMessageInput from "./dialog/dialogMessageInput"
+import DialogHeader from './dialog/dialogHeader'
+import DialogBody from './dialog/dialogBody'
+import DialogMessageInput from './dialog/dialogMessageInput'
 
 const Dialog = () => {
   return (

@@ -12,6 +12,7 @@ import NotFound from '../components/404'
 import Startup from './startup'
 import Register from '../components/register'
 import Login from '../components/login'
+import Admin from '../components/admin/Admin'
 
 const OnlyAnonymousRoute = ({ component: Component, ...rest }) => {
   const auth = useSelector((s) => s.auth)
@@ -24,6 +25,21 @@ const PrivateRoute = ({ component: Component, ...rest }) => {
   const auth = useSelector((s) => s.auth)
   const func = (props) =>
     !!auth.user && !!auth.token ? (
+      <Component {...props} />
+    ) : (
+      <Redirect
+        to={{
+          pathname: '/login'
+        }}
+      />
+    )
+  return <Route {...rest} render={func} />
+}
+
+const AdminRoute = ({ component: Component, ...rest }) => {
+  const auth = useSelector((s) => s.auth)
+  const func = (props) =>
+    !!auth.user && !!auth.token && auth.user.role.indexOf('admin') !== -1 ? (
       <Component {...props} />
     ) : (
       <Redirect
@@ -73,6 +89,7 @@ const RootComponent = (props) => {
             <OnlyAnonymousRoute exact path="/login" component={() => <Login />} />
             <Route exact path="/register" component={() => <Register />} />
             <PrivateRoute exact path="/" component={() => <Chat />} />
+            <AdminRoute exact path="/admin" component={() => <Admin />} />
             <Route component={() => <NotFound />} />
           </Switch>
         </Startup>

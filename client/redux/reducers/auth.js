@@ -1,9 +1,10 @@
 import Cookies from 'universal-cookie'
-import { history } from ".."
+import { history, getSocket } from '..'
 
 const UPDATE_LOGIN = 'UPDATE_LOGIN'
 const UPDATE_PASSWORD = 'UPDATE_PASSWORD'
 const LOGIN = 'LOGIN'
+const LOGOUT = 'LOGOUT'
 
 const cookies = new Cookies()
 const initialState = {
@@ -13,7 +14,17 @@ const initialState = {
   user: {}
 }
 
+const sideEffects = {
+  [LOGOUT]: () => {
+    cookies.remove('token')
+  }
+}
+
 export default (state = initialState, action) => {
+  if (typeof sideEffects[action.type] !== 'undefined') {
+    sideEffects[action.type]()
+  }
+
   switch (action.type) {
     case UPDATE_PASSWORD:
       return {
@@ -56,14 +67,21 @@ export function signIn() {
     fetch('/api/v1/auth', {
       method: 'POST',
       body: JSON.stringify({
-        email, password
+        email,
+        password
       }),
       headers: {
         'Content-Type': 'application/json'
       }
     })
-      .then(r => r.json())
-      .then(data => {
+      .then((r) => r.json())
+      .then((data) => {
+        getSocket().send(
+          JSON.stringify({
+            type: 'WELCOME',
+            token: data.user.id
+          })
+        )
         dispatch({
           type: LOGIN,
           token: data.token,
@@ -74,21 +92,17 @@ export function signIn() {
   }
 }
 
-export function tryGetUserInfo() {
-  return () => {
-    fetch('/api/v1/user/info')
-      .then(r => r.json())
-      .then(data => {
-        console.log(data);
-      })
-  }
-}
-
 export function trySignIn() {
   return (dispatch) => {
     fetch('/api/v1/test/auth')
-      .then(r => r.json())
-      .then(data => {
+      .then((r) => r.json())
+      .then((data) => {
+        getSocket().send(
+          JSON.stringify({
+            type: 'WELCOME',
+            token: data.user.id
+          })
+        )
         dispatch({
           type: LOGIN,
           token: data.token,

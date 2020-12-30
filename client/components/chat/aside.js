@@ -1,9 +1,9 @@
-import React from "react"
+import React from 'react'
 
-import AsideHeader from "./aside/asideHeader"
-import AsideChannels from "./aside/asideChannels"
-import AsideDirect from "./aside/asideDirect"
-import AsideApp from "./aside/asideApp"
+import AsideHeader from './aside/asideHeader'
+import AsideChannels from './aside/asideChannels'
+import AsideDirect from './aside/asideDirect'
+import AsideApp from './aside/asideApp'
 
 const Aside = () => {
   return (
@@ -13,8 +13,8 @@ const Aside = () => {
       <AsideDirect />
       <AsideApp />
     </aside>
-  );
-};
+  )
+}
 
 Aside.propTypes = {}
 

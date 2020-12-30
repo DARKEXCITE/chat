@@ -31,13 +31,8 @@ if (typeof ENABLE_SOCKETS !== 'undefined' && ENABLE_SOCKETS) {
       store.dispatch(socketActions.connected)
     }
 
-    socket.onmessage = ({data}) => {
-      // eslint-disable-next-line no-console
-
-      if (JSON.parse(data).type === 'UPDATE_MESSAGES') {
-        console.log('отработал');
-        store.dispatch(JSON.parse(data))
-      }
+    socket.onmessage = ({ data }) => {
+      store.dispatch(JSON.parse(data))
       // socket.close();
     }
 

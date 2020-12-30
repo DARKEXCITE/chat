@@ -1,19 +1,23 @@
-import React from "react"
-import { useSelector } from "react-redux"
+import React from 'react'
+import { useSelector } from 'react-redux'
 
-import DialogMessage from "./dialogMessage"
+import DialogMessage from './dialogMessage'
 
 const DialogBody = () => {
-  const messages = useSelector(s => s.chat.messages)
-
-  console.log(messages);
+  const messages = useSelector((s) => s.chat.messages)
 
   return (
     <div className="px-6 py-4 flex-1">
-      {messages.map(message => {
-        return <DialogMessage key={message.message} userEmail={message.email} message={message.message} />
+      {messages.map((message) => {
+        return (
+          <DialogMessage
+            key={message.message}
+            userEmail={message.email}
+            message={message.message}
+          />
+        )
       })}
-      </div>
+    </div>
   )
 }
 

@@ -1,24 +1,24 @@
-import express from "express"
-import path from "path"
-import cors from "cors"
-import bodyParser from "body-parser"
-import sockjs from "sockjs"
-import { renderToStaticNodeStream } from "react-dom/server"
-import React from "react"
-import cookieParser from "cookie-parser"
-import passport from "passport"
-import jwt from "jsonwebtoken"
+import express from 'express'
+import path from 'path'
+import cors from 'cors'
+import bodyParser from 'body-parser'
+import sockjs from 'sockjs'
+import { renderToStaticNodeStream } from 'react-dom/server'
+import React from 'react'
+import cookieParser from 'cookie-parser'
+import passport from 'passport'
+import jwt from 'jsonwebtoken'
 
-import mongooseService from "./services/mongoose"
-import passportJWT from "./services/passport"
-import User from "./model/User.model"
-import config from "./config"
-import Html from "../client/html"
-import auth from "./middleware/auth"
+import mongooseService from './services/mongoose'
+import passportJWT from './services/passport'
+import User from './model/User.model'
+import config from './config'
+import Html from '../client/html'
+import auth from './middleware/auth'
 
-const Root = () => "";
+const Root = () => ''
 
-mongooseService.connect();
+mongooseService.connect()
 
 try {
   // eslint-disable-next-line import/no-unresolved
@@ -29,66 +29,68 @@ try {
   //   Root = (props) => <items.Root {...props} />
   //   console.log(JSON.stringify(items.Root))
   // })()
-  console.log(Root);
+  console.log(Root)
 } catch (ex) {
-  console.log(" run yarn build:prod to enable ssr");
+  console.log(' run yarn build:prod to enable ssr')
 }
 
-let connections = [];
+let connections = []
 
-const port = process.env.PORT || 8090;
-const server = express();
+const port = process.env.PORT || 8090
+const server = express()
 
 const middleware = [
   cors(),
   passport.initialize(),
-  express.static(path.resolve(__dirname, "../dist/assets")),
-  bodyParser.urlencoded({ limit: "50mb", extended: true, parameterLimit: 50000 }),
-  bodyParser.json({ limit: "50mb", extended: true }),
+  express.static(path.resolve(__dirname, '../dist/assets')),
+  bodyParser.urlencoded({ limit: '50mb', extended: true, parameterLimit: 50000 }),
+  bodyParser.json({ limit: '50mb', extended: true }),
   cookieParser()
-];
+]
 
-passport.use("jwt", passportJWT.jwt);
+passport.use('jwt', passportJWT.jwt)
 
-middleware.forEach((it) => server.use(it));
+middleware.forEach((it) => server.use(it))
 
-server.post("/api/v1/message", async (req, res) => {
-  connections.forEach(c => {
-    c.write(JSON.stringify({ type: 'UPDATE_MESSAGES', message: req.body.message, email: req.body.email }))
+server.post('/api/v1/message', async (req, res) => {
+  connections.forEach((c) => {
+    c.write(
+      JSON.stringify({ type: 'UPDATE_MESSAGES', message: req.body.message, email: req.body.email })
+    )
   })
   res.json({ status: 200 })
-});
+})
 
-server.post("/api/v1/auth", async (req, res) => {
+server.post('/api/v1/auth', async (req, res) => {
   try {
-    const user = await User.findAndValidateUser(req.body);
-    const payload = { uid: user.id };
-    const token = jwt.sign(payload, config.secret, { expiresIn: "48h" });
-    delete user.password;
-    res.cookie("token", token, { maxAge: 1000 * 60 * 60 * 48 });
+    const user = await User.findAndValidateUser(req.body)
+    const payload = { uid: user.id }
+    const token = jwt.sign(payload, config.secret, { expiresIn: '48h' })
+    delete user.password
+    res.cookie('token', token, { maxAge: 1000 * 60 * 60 * 48 })
 
     res.json({
       status: 200,
       token,
       user
-    });
+    })
   } catch (err) {
     res.json({
       status: 203,
       err
-    });
+    })
   }
-});
+})
 
-server.post("/api/v1/register", async (req, res) => {
+server.post('/api/v1/register', async (req, res) => {
   const validate = await User.findOne({ email: req.body.email })
 
   if (validate) {
-    res.status(203)
+    res.status(400)
     res.json({
-      status: 203,
+      status: 400,
       message: 'Данный email уже зарегестрирован'
-    });
+    })
   }
 
   const user = await new User({
@@ -98,75 +100,90 @@ server.post("/api/v1/register", async (req, res) => {
   await user.save()
 
   res.json({ status: 200 })
-});
+})
 
-server.get("/api/v1/test/auth", async (req, res) => {
+server.get('/api/v1/test/auth', async (req, res) => {
   try {
-    const jwtUser = jwt.verify(req.cookies.token, config.secret);
-    const user = await User.findById(jwtUser.uid);
+    const jwtUser = jwt.verify(req.cookies.token, config.secret)
+    const user = await User.findById(jwtUser.uid)
 
-    const payload = { uid: user.id };
-    const token = jwt.sign(payload, config.secret, { expiresIn: "48h" });
-    delete user.password;
+    const payload = { uid: user.id }
+    const token = jwt.sign(payload, config.secret, { expiresIn: '48h' })
+    delete user.password
 
-    res.cookie("token", token, { maxAge: 1000 * 60 * 60 * 48 });
-    res.json({ status: 200, token, user });
+    res.cookie('token', token, { maxAge: 1000 * 60 * 60 * 48 })
+    res.json({ status: 200, token, user })
   } catch (err) {
-    res.json({ status: 203, err });
+    res.json({ status: 203, err })
   }
-});
+})
 
-server.get("/api/v1/user/info", auth([]), async (req, res) => {
-  res.json({ status: 200 });
-});
+server.get('/api/v1/admin/logout', auth(['admin']), async (req, res) => {
+  connections.forEach((c) => {
+    c.write(JSON.stringify({ type: 'LOGOUT' }))
+  })
+  res.json({ status: 200 })
+})
 
-server.use("/api/", (req, res) => {
-  res.status(404);
-  res.end();
-});
+server.get('/api/v1/admin/users', auth(['admin']), async (req, res) => {
+  connections.forEach((c) => {
+    c.write(JSON.stringify({ type: 'PUSH_USER_INFO' }))
+  })
+  res.json({ status: 200 })
+})
+
+server.use('/api/', (req, res) => {
+  res.status(404)
+  res.end()
+})
 
 const [htmlStart, htmlEnd] = Html({
-  body: "separator",
-  title: "Skillcrucial - Become an IT HERO"
-}).split("separator");
+  body: 'separator',
+  title: 'Skillcrucial - Become an IT HERO'
+}).split('separator')
 
-server.get("/", (req, res) => {
-  const appStream = renderToStaticNodeStream(<Root location={req.url} context={{}} />);
-  res.write(htmlStart);
-  appStream.pipe(res, { end: false });
-  appStream.on("end", () => {
-    res.write(htmlEnd);
-    res.end();
-  });
-});
+server.get('/', (req, res) => {
+  const appStream = renderToStaticNodeStream(<Root location={req.url} context={{}} />)
+  res.write(htmlStart)
+  appStream.pipe(res, { end: false })
+  appStream.on('end', () => {
+    res.write(htmlEnd)
+    res.end()
+  })
+})
 
-server.get("/*", (req, res) => {
+server.get('/*', (req, res) => {
   const initialState = {
     location: req.url
-  };
+  }
 
   return res.send(
     Html({
-      body: "",
+      body: '',
       initialState
     })
-  );
-});
+  )
+})
 
-const app = server.listen(port);
+const app = server.listen(port)
 
 if (config.isSocketsEnabled) {
-  const echo = sockjs.createServer();
-  echo.on("connection", (conn) => {
-    connections.push(conn);
-    conn.on("data", async () => {
+  const echo = sockjs.createServer()
+  echo.on('connection', (conn) => {
+    connections.push(conn)
 
-    });
+    conn.on('data', async (message) => {
+      const data = JSON.parse(message)
 
-    conn.on("close", () => {
-      connections = connections.filter((c) => c.readyState !== 3);
-    });
-  });
-  echo.installHandlers(app, { prefix: "/ws" });
+      if (data.type === 'WELCOME') {
+        conn.token = data.token
+      }
+    })
+
+    conn.on('close', () => {
+      connections = connections.filter((c) => c.readyState !== 3)
+    })
+  })
+  echo.installHandlers(app, { prefix: '/ws' })
 }
-console.log(`Serving at http://localhost:${port}`);
+console.log(`Serving at http://localhost:${port}`)
